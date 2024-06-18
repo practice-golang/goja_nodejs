@@ -7,11 +7,11 @@ import (
 	"reflect"
 	"strconv"
 
-	"github.com/dop251/goja"
-	"github.com/dop251/goja_nodejs/errors"
-	"github.com/dop251/goja_nodejs/require"
+	"github.com/practice-golang/goja_nodejs/errors"
+	"github.com/practice-golang/goja_nodejs/require"
 
 	"github.com/dop251/base64dec"
+	goja "github.com/grafana/sobek"
 	"golang.org/x/text/encoding/unicode"
 )
 

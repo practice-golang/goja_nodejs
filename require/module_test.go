@@ -11,7 +11,7 @@ import (
 	"runtime"
 	"testing"
 
-	js "github.com/dop251/goja"
+	js "github.com/grafana/sobek"
 )
 
 func mapFileSystemSourceLoader(files map[string]string) SourceLoader {

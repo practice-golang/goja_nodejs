@@ -4,8 +4,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/dop251/goja"
-	"github.com/dop251/goja_nodejs/require"
+	goja "github.com/grafana/sobek"
+	"github.com/practice-golang/goja_nodejs/require"
 )
 
 const ModuleName = "process"

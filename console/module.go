@@ -1,9 +1,9 @@
 package console
 
 import (
-	"github.com/dop251/goja"
-	"github.com/dop251/goja_nodejs/require"
-	"github.com/dop251/goja_nodejs/util"
+	goja "github.com/grafana/sobek"
+	"github.com/practice-golang/goja_nodejs/require"
+	"github.com/practice-golang/goja_nodejs/util"
 )
 
 const ModuleName = "console"

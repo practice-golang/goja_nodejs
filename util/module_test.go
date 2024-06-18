@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/dop251/goja"
-	"github.com/dop251/goja_nodejs/require"
+	goja "github.com/grafana/sobek"
+	"github.com/practice-golang/goja_nodejs/require"
 )
 
 func TestUtil_Format(t *testing.T) {

@@ -1,10 +1,10 @@
-module github.com/dop251/goja_nodejs
+module github.com/practice-golang/goja_nodejs
 
 go 1.18
 
 require (
 	github.com/dop251/base64dec v0.0.0-20231022112746-c6c9f9a96217
-	github.com/dop251/goja v0.0.0-20231014103939-873a1496dc8e
+	github.com/grafana/sobek v0.0.0-20231014103939-873a1496dc8e
 	golang.org/x/net v0.17.0
 	golang.org/x/text v0.13.0
 )
