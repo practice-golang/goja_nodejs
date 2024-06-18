@@ -1,4 +1,8 @@
-Nodejs compatibility library for Goja
+Fork for using sobek
+
+----
+
+Nodejs compatibility library for Sobek
 ====
 
 This is a collection of Goja modules that provide nodejs compatibility.
