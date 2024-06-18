@@ -4,7 +4,7 @@ import (
 	"os"
 	"strings"
 
-	goja "github.com/grafana/sobek"
+	"github.com/grafana/sobek"
 	"github.com/practice-golang/goja_nodejs/require"
 )
 
@@ -14,7 +14,7 @@ type Process struct {
 	env map[string]string
 }
 
-func Require(runtime *goja.Runtime, module *goja.Object) {
+func Require(runtime *sobek.Runtime, module *sobek.Object) {
 	p := &Process{
 		env: make(map[string]string),
 	}
@@ -24,11 +24,11 @@ func Require(runtime *goja.Runtime, module *goja.Object) {
 		p.env[envKeyValue[0]] = envKeyValue[1]
 	}
 
-	o := module.Get("exports").(*goja.Object)
+	o := module.Get("exports").(*sobek.Object)
 	o.Set("env", p.env)
 }
 
-func Enable(runtime *goja.Runtime) {
+func Enable(runtime *sobek.Runtime) {
 	runtime.Set("process", require.Require(runtime, ModuleName))
 }
 

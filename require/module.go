@@ -12,11 +12,11 @@ import (
 	"syscall"
 	"text/template"
 
-	js "github.com/grafana/sobek"
+	"github.com/grafana/sobek"
 	"github.com/grafana/sobek/parser"
 )
 
-type ModuleLoader func(*js.Runtime, *js.Object)
+type ModuleLoader func(*sobek.Runtime, *sobek.Object)
 
 // SourceLoader represents a function that returns a file data at a given path.
 // The function should return ModuleFileDoesNotExistError if the file either doesn't exist or is a directory.
@@ -36,7 +36,7 @@ var native, builtin map[string]ModuleLoader
 type Registry struct {
 	sync.Mutex
 	native   map[string]ModuleLoader
-	compiled map[string]*js.Program
+	compiled map[string]*sobek.Program
 
 	srcLoader     SourceLoader
 	globalFolders []string
@@ -44,9 +44,9 @@ type Registry struct {
 
 type RequireModule struct {
 	r           *Registry
-	runtime     *js.Runtime
-	modules     map[string]*js.Object
-	nodeModules map[string]*js.Object
+	runtime     *sobek.Runtime
+	modules     map[string]*sobek.Object
+	nodeModules map[string]*sobek.Object
 }
 
 func NewRegistry(opts ...Option) *Registry {
@@ -89,12 +89,12 @@ func WithGlobalFolders(globalFolders ...string) Option {
 }
 
 // Enable adds the require() function to the specified runtime.
-func (r *Registry) Enable(runtime *js.Runtime) *RequireModule {
+func (r *Registry) Enable(runtime *sobek.Runtime) *RequireModule {
 	rrt := &RequireModule{
 		r:           r,
 		runtime:     runtime,
-		modules:     make(map[string]*js.Object),
-		nodeModules: make(map[string]*js.Object),
+		modules:     make(map[string]*sobek.Object),
+		nodeModules: make(map[string]*sobek.Object),
 	}
 
 	runtime.Set("require", rrt.require)
@@ -148,7 +148,7 @@ func (r *Registry) getSource(p string) ([]byte, error) {
 	return srcLoader(p)
 }
 
-func (r *Registry) getCompiledSource(p string) (*js.Program, error) {
+func (r *Registry) getCompiledSource(p string) (*sobek.Program, error) {
 	r.Lock()
 	defer r.Unlock()
 
@@ -165,14 +165,14 @@ func (r *Registry) getCompiledSource(p string) (*js.Program, error) {
 		}
 
 		source := "(function(exports, require, module) {" + s + "\n})"
-		parsed, err := js.Parse(p, source, parser.WithSourceMapLoader(r.srcLoader))
+		parsed, err := sobek.Parse(p, source, parser.WithSourceMapLoader(r.srcLoader))
 		if err != nil {
 			return nil, err
 		}
-		prg, err = js.CompileAST(parsed, false)
+		prg, err = sobek.CompileAST(parsed, false)
 		if err == nil {
 			if r.compiled == nil {
-				r.compiled = make(map[string]*js.Program)
+				r.compiled = make(map[string]*sobek.Program)
 			}
 			r.compiled[p] = prg
 		}
@@ -181,10 +181,10 @@ func (r *Registry) getCompiledSource(p string) (*js.Program, error) {
 	return prg, nil
 }
 
-func (r *RequireModule) require(call js.FunctionCall) js.Value {
+func (r *RequireModule) require(call sobek.FunctionCall) sobek.Value {
 	ret, err := r.Require(call.Argument(0).String())
 	if err != nil {
-		if _, ok := err.(*js.Exception); !ok {
+		if _, ok := err.(*sobek.Exception); !ok {
 			panic(r.runtime.NewGoError(err))
 		}
 		panic(err)
@@ -197,7 +197,7 @@ func filepathClean(p string) string {
 }
 
 // Require can be used to import modules from Go source (similar to JS require() function).
-func (r *RequireModule) Require(p string) (ret js.Value, err error) {
+func (r *RequireModule) Require(p string) (ret sobek.Value, err error) {
 	module, err := r.resolve(p)
 	if err != nil {
 		return
@@ -206,9 +206,9 @@ func (r *RequireModule) Require(p string) (ret js.Value, err error) {
 	return
 }
 
-func Require(runtime *js.Runtime, name string) js.Value {
-	if r, ok := js.AssertFunction(runtime.Get("require")); ok {
-		mod, err := r(js.Undefined(), runtime.ToValue(name))
+func Require(runtime *sobek.Runtime, name string) sobek.Value {
+	if r, ok := sobek.AssertFunction(runtime.Get("require")); ok {
+		mod, err := r(sobek.Undefined(), runtime.ToValue(name))
 		if err != nil {
 			panic(err)
 		}

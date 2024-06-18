@@ -3,7 +3,7 @@ package errors
 import (
 	"fmt"
 
-	goja "github.com/grafana/sobek"
+	"github.com/grafana/sobek"
 )
 
 const (
@@ -13,18 +13,18 @@ const (
 	ErrCodeMissingArgs     = "ERR_MISSING_ARGS"
 )
 
-func error_toString(call goja.FunctionCall, r *goja.Runtime) goja.Value {
+func error_toString(call sobek.FunctionCall, r *sobek.Runtime) sobek.Value {
 	this := call.This.ToObject(r)
 	var name, msg string
-	if n := this.Get("name"); n != nil && !goja.IsUndefined(n) {
+	if n := this.Get("name"); n != nil && !sobek.IsUndefined(n) {
 		name = n.String()
 	} else {
 		name = "Error"
 	}
-	if m := this.Get("message"); m != nil && !goja.IsUndefined(m) {
+	if m := this.Get("message"); m != nil && !sobek.IsUndefined(m) {
 		msg = m.String()
 	}
-	if code := this.Get("code"); code != nil && !goja.IsUndefined(code) {
+	if code := this.Get("code"); code != nil && !sobek.IsUndefined(code) {
 		if name != "" {
 			name += " "
 		}
@@ -39,20 +39,20 @@ func error_toString(call goja.FunctionCall, r *goja.Runtime) goja.Value {
 	return r.ToValue(name)
 }
 
-func addProps(r *goja.Runtime, e *goja.Object, code string) {
+func addProps(r *sobek.Runtime, e *sobek.Object, code string) {
 	e.Set("code", code)
-	e.DefineDataProperty("toString", r.ToValue(error_toString), goja.FLAG_TRUE, goja.FLAG_TRUE, goja.FLAG_FALSE)
+	e.DefineDataProperty("toString", r.ToValue(error_toString), sobek.FLAG_TRUE, sobek.FLAG_TRUE, sobek.FLAG_FALSE)
 }
 
-func NewTypeError(r *goja.Runtime, code string, params ...interface{}) *goja.Object {
+func NewTypeError(r *sobek.Runtime, code string, params ...interface{}) *sobek.Object {
 	e := r.NewTypeError(params...)
 	addProps(r, e, code)
 	return e
 }
 
-func NewError(r *goja.Runtime, ctor *goja.Object, code string, args ...interface{}) *goja.Object {
+func NewError(r *sobek.Runtime, ctor *sobek.Object, code string, args ...interface{}) *sobek.Object {
 	if ctor == nil {
-		ctor, _ = r.Get("Error").(*goja.Object)
+		ctor, _ = r.Get("Error").(*sobek.Object)
 	}
 	if ctor == nil {
 		return nil

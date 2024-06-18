@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"sort"
 
-	goja "github.com/grafana/sobek"
+	"github.com/grafana/sobek"
 	"github.com/practice-golang/goja_nodejs/errors"
 )
 
@@ -13,19 +13,19 @@ var (
 	reflectTypeURLSearchParamsIterator = reflect.TypeOf((*urlSearchParamsIterator)(nil))
 )
 
-func newInvalidTupleError(r *goja.Runtime) *goja.Object {
+func newInvalidTupleError(r *sobek.Runtime) *sobek.Object {
 	return errors.NewTypeError(r, "ERR_INVALID_TUPLE", "Each query pair must be an iterable [name, value] tuple")
 }
 
-func newMissingArgsError(r *goja.Runtime, msg string) *goja.Object {
+func newMissingArgsError(r *sobek.Runtime, msg string) *sobek.Object {
 	return errors.NewTypeError(r, errors.ErrCodeMissingArgs, msg)
 }
 
-func newInvalidArgsError(r *goja.Runtime) *goja.Object {
+func newInvalidArgsError(r *sobek.Runtime) *sobek.Object {
 	return errors.NewTypeError(r, "ERR_INVALID_ARG_TYPE", `The "callback" argument must be of type function.`)
 }
 
-func toUrlSearchParams(r *goja.Runtime, v goja.Value) *urlSearchParams {
+func toUrlSearchParams(r *sobek.Runtime, v sobek.Value) *urlSearchParams {
 	if v.ExportType() == reflectTypeURLSearchParams {
 		if u := v.Export().(*urlSearchParams); u != nil {
 			return u
@@ -34,36 +34,36 @@ func toUrlSearchParams(r *goja.Runtime, v goja.Value) *urlSearchParams {
 	panic(errors.NewTypeError(r, errors.ErrCodeInvalidThis, `Value of "this" must be of type URLSearchParams`))
 }
 
-func (m *urlModule) newURLSearchParams(sp *urlSearchParams) *goja.Object {
-	v := m.r.ToValue(sp).(*goja.Object)
+func (m *urlModule) newURLSearchParams(sp *urlSearchParams) *sobek.Object {
+	v := m.r.ToValue(sp).(*sobek.Object)
 	v.SetPrototype(m.URLSearchParamsPrototype)
 	return v
 }
 
-func (m *urlModule) createURLSearchParamsConstructor() goja.Value {
-	f := m.r.ToValue(func(call goja.ConstructorCall) *goja.Object {
+func (m *urlModule) createURLSearchParamsConstructor() sobek.Value {
+	f := m.r.ToValue(func(call sobek.ConstructorCall) *sobek.Object {
 		var sp searchParams
 		v := call.Argument(0)
-		if o, ok := v.(*goja.Object); ok {
+		if o, ok := v.(*sobek.Object); ok {
 			sp = m.buildParamsFromObject(o)
-		} else if !goja.IsUndefined(v) {
+		} else if !sobek.IsUndefined(v) {
 			sp = parseSearchQuery(v.String())
 		}
 
 		return m.newURLSearchParams(&urlSearchParams{searchParams: sp})
-	}).(*goja.Object)
+	}).(*sobek.Object)
 
 	m.URLSearchParamsPrototype = m.createURLSearchParamsPrototype()
 	f.Set("prototype", m.URLSearchParamsPrototype)
-	m.URLSearchParamsPrototype.DefineDataProperty("constructor", f, goja.FLAG_FALSE, goja.FLAG_FALSE, goja.FLAG_FALSE)
+	m.URLSearchParamsPrototype.DefineDataProperty("constructor", f, sobek.FLAG_FALSE, sobek.FLAG_FALSE, sobek.FLAG_FALSE)
 
 	return f
 }
 
-func (m *urlModule) buildParamsFromObject(o *goja.Object) searchParams {
+func (m *urlModule) buildParamsFromObject(o *sobek.Object) searchParams {
 	var query searchParams
 
-	if o.GetSymbol(goja.SymIterator) != nil {
+	if o.GetSymbol(sobek.SymIterator) != nil {
 		return m.buildParamsFromIterable(o)
 	}
 
@@ -75,15 +75,15 @@ func (m *urlModule) buildParamsFromObject(o *goja.Object) searchParams {
 	return query
 }
 
-func (m *urlModule) buildParamsFromIterable(o *goja.Object) searchParams {
+func (m *urlModule) buildParamsFromIterable(o *sobek.Object) searchParams {
 	var query searchParams
 
-	m.r.ForOf(o, func(val goja.Value) bool {
+	m.r.ForOf(o, func(val sobek.Value) bool {
 		obj := val.ToObject(m.r)
 		var name, value string
 		i := 0
 		// Use ForOf to determine if the object is iterable
-		m.r.ForOf(obj, func(val goja.Value) bool {
+		m.r.ForOf(obj, func(val sobek.Value) bool {
 			if i == 0 {
 				name = val.String()
 				i++
@@ -114,10 +114,10 @@ func (m *urlModule) buildParamsFromIterable(o *goja.Object) searchParams {
 	return query
 }
 
-func (m *urlModule) createURLSearchParamsPrototype() *goja.Object {
+func (m *urlModule) createURLSearchParamsPrototype() *sobek.Object {
 	p := m.r.NewObject()
 
-	p.Set("append", m.r.ToValue(func(call goja.FunctionCall) goja.Value {
+	p.Set("append", m.r.ToValue(func(call sobek.FunctionCall) sobek.Value {
 		if len(call.Arguments) < 2 {
 			panic(newMissingArgsError(m.r, `The "name" and "value" arguments must be specified`))
 		}
@@ -129,10 +129,10 @@ func (m *urlModule) createURLSearchParamsPrototype() *goja.Object {
 		})
 		u.markUpdated()
 
-		return goja.Undefined()
+		return sobek.Undefined()
 	}))
 
-	p.Set("delete", m.r.ToValue(func(call goja.FunctionCall) goja.Value {
+	p.Set("delete", m.r.ToValue(func(call sobek.FunctionCall) sobek.Value {
 		u := toUrlSearchParams(m.r, call.This)
 
 		if len(call.Arguments) < 1 {
@@ -145,7 +145,7 @@ func (m *urlModule) createURLSearchParamsPrototype() *goja.Object {
 				return v.name != name
 			} else if v.name == name {
 				arg := call.Argument(1)
-				if !goja.IsUndefined(arg) && v.value == arg.String() {
+				if !sobek.IsUndefined(arg) && v.value == arg.String() {
 					return false
 				}
 			}
@@ -164,23 +164,23 @@ func (m *urlModule) createURLSearchParamsPrototype() *goja.Object {
 		u.searchParams = u.searchParams[:j]
 		u.markUpdated()
 
-		return goja.Undefined()
+		return sobek.Undefined()
 	}))
 
-	entries := m.r.ToValue(func(call goja.FunctionCall) goja.Value {
+	entries := m.r.ToValue(func(call sobek.FunctionCall) sobek.Value {
 		return m.newURLSearchParamsIterator(toUrlSearchParams(m.r, call.This), urlSearchParamsIteratorEntries)
 	})
 	p.Set("entries", entries)
-	p.DefineDataPropertySymbol(goja.SymIterator, entries, goja.FLAG_TRUE, goja.FLAG_FALSE, goja.FLAG_TRUE)
+	p.DefineDataPropertySymbol(sobek.SymIterator, entries, sobek.FLAG_TRUE, sobek.FLAG_FALSE, sobek.FLAG_TRUE)
 
-	p.Set("forEach", m.r.ToValue(func(call goja.FunctionCall) goja.Value {
+	p.Set("forEach", m.r.ToValue(func(call sobek.FunctionCall) sobek.Value {
 		u := toUrlSearchParams(m.r, call.This)
 
 		if len(call.Arguments) != 1 {
 			panic(newInvalidArgsError(m.r))
 		}
 
-		if fn, ok := goja.AssertFunction(call.Argument(0)); ok {
+		if fn, ok := sobek.AssertFunction(call.Argument(0)); ok {
 			for _, pair := range u.searchParams {
 				// name, value, searchParams
 				_, err := fn(
@@ -198,10 +198,10 @@ func (m *urlModule) createURLSearchParamsPrototype() *goja.Object {
 			panic(newInvalidArgsError(m.r))
 		}
 
-		return goja.Undefined()
+		return sobek.Undefined()
 	}))
 
-	p.Set("get", m.r.ToValue(func(call goja.FunctionCall) goja.Value {
+	p.Set("get", m.r.ToValue(func(call sobek.FunctionCall) sobek.Value {
 		u := toUrlSearchParams(m.r, call.This)
 
 		if len(call.Arguments) == 0 {
@@ -212,10 +212,10 @@ func (m *urlModule) createURLSearchParamsPrototype() *goja.Object {
 			return m.r.ToValue(val)
 		}
 
-		return goja.Null()
+		return sobek.Null()
 	}))
 
-	p.Set("getAll", m.r.ToValue(func(call goja.FunctionCall) goja.Value {
+	p.Set("getAll", m.r.ToValue(func(call sobek.FunctionCall) sobek.Value {
 		u := toUrlSearchParams(m.r, call.This)
 
 		if len(call.Arguments) == 0 {
@@ -226,7 +226,7 @@ func (m *urlModule) createURLSearchParamsPrototype() *goja.Object {
 		return m.r.ToValue(vals)
 	}))
 
-	p.Set("has", m.r.ToValue(func(call goja.FunctionCall) goja.Value {
+	p.Set("has", m.r.ToValue(func(call sobek.FunctionCall) sobek.Value {
 		u := toUrlSearchParams(m.r, call.This)
 
 		if len(call.Arguments) == 0 {
@@ -236,7 +236,7 @@ func (m *urlModule) createURLSearchParamsPrototype() *goja.Object {
 		name := call.Argument(0).String()
 		value := call.Argument(1)
 		var res bool
-		if goja.IsUndefined(value) {
+		if sobek.IsUndefined(value) {
 			res = u.hasName(name)
 		} else {
 			res = u.hasValue(name, value.String())
@@ -244,11 +244,11 @@ func (m *urlModule) createURLSearchParamsPrototype() *goja.Object {
 		return m.r.ToValue(res)
 	}))
 
-	p.Set("keys", m.r.ToValue(func(call goja.FunctionCall) goja.Value {
+	p.Set("keys", m.r.ToValue(func(call sobek.FunctionCall) sobek.Value {
 		return m.newURLSearchParamsIterator(toUrlSearchParams(m.r, call.This), urlSearchParamsIteratorKeys)
 	}))
 
-	p.Set("set", m.r.ToValue(func(call goja.FunctionCall) goja.Value {
+	p.Set("set", m.r.ToValue(func(call sobek.FunctionCall) sobek.Value {
 		u := toUrlSearchParams(m.r, call.This)
 
 		if len(call.Arguments) < 2 {
@@ -284,28 +284,28 @@ func (m *urlModule) createURLSearchParamsPrototype() *goja.Object {
 
 		u.markUpdated()
 
-		return goja.Undefined()
+		return sobek.Undefined()
 	}))
 
-	p.Set("sort", m.r.ToValue(func(call goja.FunctionCall) goja.Value {
+	p.Set("sort", m.r.ToValue(func(call sobek.FunctionCall) sobek.Value {
 		u := toUrlSearchParams(m.r, call.This)
 		sort.Stable(u.searchParams)
 		u.markUpdated()
-		return goja.Undefined()
+		return sobek.Undefined()
 	}))
 
-	p.DefineAccessorProperty("size", m.r.ToValue(func(call goja.FunctionCall) goja.Value {
+	p.DefineAccessorProperty("size", m.r.ToValue(func(call sobek.FunctionCall) sobek.Value {
 		u := toUrlSearchParams(m.r, call.This)
 		return m.r.ToValue(len(u.searchParams))
-	}), nil, goja.FLAG_FALSE, goja.FLAG_TRUE)
+	}), nil, sobek.FLAG_FALSE, sobek.FLAG_TRUE)
 
-	p.Set("toString", m.r.ToValue(func(call goja.FunctionCall) goja.Value {
+	p.Set("toString", m.r.ToValue(func(call sobek.FunctionCall) sobek.Value {
 		u := toUrlSearchParams(m.r, call.This)
 		str := u.searchParams.Encode()
 		return m.r.ToValue(str)
 	}))
 
-	p.Set("values", m.r.ToValue(func(call goja.FunctionCall) goja.Value {
+	p.Set("values", m.r.ToValue(func(call sobek.FunctionCall) sobek.Value {
 		return m.newURLSearchParamsIterator(toUrlSearchParams(m.r, call.This), urlSearchParamsIteratorValues)
 	}))
 
@@ -332,7 +332,7 @@ type urlSearchParamsIterator struct {
 	idx int
 }
 
-func toURLSearchParamsIterator(r *goja.Runtime, v goja.Value) *urlSearchParamsIterator {
+func toURLSearchParamsIterator(r *sobek.Runtime, v sobek.Value) *urlSearchParamsIterator {
 	if v.ExportType() == reflectTypeURLSearchParamsIterator {
 		if u := v.Export().(*urlSearchParamsIterator); u != nil {
 			return u
@@ -342,14 +342,14 @@ func toURLSearchParamsIterator(r *goja.Runtime, v goja.Value) *urlSearchParamsIt
 	panic(errors.NewTypeError(r, errors.ErrCodeInvalidThis, `Value of "this" must be of type URLSearchParamIterator`))
 }
 
-func (m *urlModule) getURLSearchParamsIteratorPrototype() *goja.Object {
+func (m *urlModule) getURLSearchParamsIteratorPrototype() *sobek.Object {
 	if m.URLSearchParamsIteratorPrototype != nil {
 		return m.URLSearchParamsIteratorPrototype
 	}
 
 	p := m.r.NewObject()
 
-	p.Set("next", m.r.ToValue(func(call goja.FunctionCall) goja.Value {
+	p.Set("next", m.r.ToValue(func(call sobek.FunctionCall) sobek.Value {
 		it := toURLSearchParamsIterator(m.r, call.This)
 		res := m.r.NewObject()
 		if it.idx < len(it.sp.searchParams) {
@@ -365,23 +365,23 @@ func (m *urlModule) getURLSearchParamsIteratorPrototype() *goja.Object {
 			res.Set("done", false)
 			it.idx++
 		} else {
-			res.Set("value", goja.Undefined())
+			res.Set("value", sobek.Undefined())
 			res.Set("done", true)
 		}
 		return res
 	}))
 
-	p.DefineDataPropertySymbol(goja.SymToStringTag, m.r.ToValue("URLSearchParams Iterator"), goja.FLAG_FALSE, goja.FLAG_FALSE, goja.FLAG_TRUE)
+	p.DefineDataPropertySymbol(sobek.SymToStringTag, m.r.ToValue("URLSearchParams Iterator"), sobek.FLAG_FALSE, sobek.FLAG_FALSE, sobek.FLAG_TRUE)
 
 	m.URLSearchParamsIteratorPrototype = p
 	return p
 }
 
-func (m *urlModule) newURLSearchParamsIterator(sp *urlSearchParams, typ urlSearchParamsIteratorType) goja.Value {
+func (m *urlModule) newURLSearchParamsIterator(sp *urlSearchParams, typ urlSearchParamsIteratorType) sobek.Value {
 	it := m.r.ToValue(&urlSearchParamsIterator{
 		typ: typ,
 		sp:  sp,
-	}).(*goja.Object)
+	}).(*sobek.Object)
 
 	it.SetPrototype(m.getURLSearchParamsIteratorPrototype())
 

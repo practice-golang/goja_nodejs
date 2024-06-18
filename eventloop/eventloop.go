@@ -5,7 +5,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	goja "github.com/grafana/sobek"
+	"github.com/grafana/sobek"
 	"github.com/practice-golang/goja_nodejs/console"
 	"github.com/practice-golang/goja_nodejs/require"
 )
@@ -31,7 +31,7 @@ type Immediate struct {
 }
 
 type EventLoop struct {
-	vm       *goja.Runtime
+	vm       *sobek.Runtime
 	jobChan  chan func()
 	jobCount int32
 	canRun   int32
@@ -50,7 +50,7 @@ type EventLoop struct {
 }
 
 func NewEventLoop(opts ...Option) *EventLoop {
-	vm := goja.New()
+	vm := sobek.New()
 
 	loop := &EventLoop{
 		vm:            vm,
@@ -98,10 +98,10 @@ func WithRegistry(registry *require.Registry) Option {
 	}
 }
 
-func (loop *EventLoop) schedule(call goja.FunctionCall, repeating bool) goja.Value {
-	if fn, ok := goja.AssertFunction(call.Argument(0)); ok {
+func (loop *EventLoop) schedule(call sobek.FunctionCall, repeating bool) sobek.Value {
+	if fn, ok := sobek.AssertFunction(call.Argument(0)); ok {
 		delay := call.Argument(1).ToInteger()
-		var args []goja.Value
+		var args []sobek.Value
 		if len(call.Arguments) > 2 {
 			args = append(args, call.Arguments[2:]...)
 		}
@@ -116,17 +116,17 @@ func (loop *EventLoop) schedule(call goja.FunctionCall, repeating bool) goja.Val
 	return nil
 }
 
-func (loop *EventLoop) setTimeout(call goja.FunctionCall) goja.Value {
+func (loop *EventLoop) setTimeout(call sobek.FunctionCall) sobek.Value {
 	return loop.schedule(call, false)
 }
 
-func (loop *EventLoop) setInterval(call goja.FunctionCall) goja.Value {
+func (loop *EventLoop) setInterval(call sobek.FunctionCall) sobek.Value {
 	return loop.schedule(call, true)
 }
 
-func (loop *EventLoop) setImmediate(call goja.FunctionCall) goja.Value {
-	if fn, ok := goja.AssertFunction(call.Argument(0)); ok {
-		var args []goja.Value
+func (loop *EventLoop) setImmediate(call sobek.FunctionCall) sobek.Value {
+	if fn, ok := sobek.AssertFunction(call.Argument(0)); ok {
+		var args []sobek.Value
 		if len(call.Arguments) > 1 {
 			args = append(args, call.Arguments[1:]...)
 		}
@@ -143,7 +143,7 @@ func (loop *EventLoop) setImmediate(call goja.FunctionCall) goja.Value {
 // The instance of goja.Runtime that is passed to the function and any Values derived
 // from it must not be used outside the function. SetTimeout is
 // safe to call inside or outside the loop.
-func (loop *EventLoop) SetTimeout(fn func(*goja.Runtime), timeout time.Duration) *Timer {
+func (loop *EventLoop) SetTimeout(fn func(*sobek.Runtime), timeout time.Duration) *Timer {
 	t := loop.addTimeout(func() { fn(loop.vm) }, timeout)
 	loop.addAuxJob(func() {
 		loop.jobCount++
@@ -166,7 +166,7 @@ func (loop *EventLoop) ClearTimeout(t *Timer) {
 // function and any Values derived from it must not be used outside
 // the function. SetInterval is safe to call inside or outside the
 // loop.
-func (loop *EventLoop) SetInterval(fn func(*goja.Runtime), timeout time.Duration) *Interval {
+func (loop *EventLoop) SetInterval(fn func(*sobek.Runtime), timeout time.Duration) *Interval {
 	i := loop.addInterval(func() { fn(loop.vm) }, timeout)
 	loop.addAuxJob(func() {
 		loop.jobCount++
@@ -198,7 +198,7 @@ func (loop *EventLoop) setRunning() {
 // outside the function.
 // Do NOT use this function while the loop is already running. Use RunOnLoop() instead.
 // If the loop is already started it will panic.
-func (loop *EventLoop) Run(fn func(*goja.Runtime)) {
+func (loop *EventLoop) Run(fn func(*sobek.Runtime)) {
 	loop.setRunning()
 	fn(loop.vm)
 	loop.run(false)
@@ -254,7 +254,7 @@ func (loop *EventLoop) StopNoWait() {
 // The order of the runs is preserved (i.e. the functions will be called in the same order as calls to RunOnLoop())
 // The instance of goja.Runtime that is passed to the function and any Values derived from it must not be used
 // outside the function. It is safe to call inside or outside the loop.
-func (loop *EventLoop) RunOnLoop(fn func(*goja.Runtime)) {
+func (loop *EventLoop) RunOnLoop(fn func(*sobek.Runtime)) {
 	loop.addAuxJob(func() { fn(loop.vm) })
 }
 

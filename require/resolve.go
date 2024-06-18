@@ -8,14 +8,14 @@ import (
 	"runtime"
 	"strings"
 
-	js "github.com/grafana/sobek"
+	"github.com/grafana/sobek"
 )
 
 const NodePrefix = "node:"
 
 // NodeJS module search algorithm described by
 // https://nodejs.org/api/modules.html#modules_all_together
-func (r *RequireModule) resolve(modpath string) (module *js.Object, err error) {
+func (r *RequireModule) resolve(modpath string) (module *sobek.Object, err error) {
 	origPath, modpath := modpath, filepathClean(modpath)
 	if modpath == "" {
 		return nil, IllegalModuleNameError
@@ -64,7 +64,7 @@ func (r *RequireModule) resolve(modpath string) (module *js.Object, err error) {
 	return
 }
 
-func (r *RequireModule) loadNative(path string) (*js.Object, error) {
+func (r *RequireModule) loadNative(path string) (*sobek.Object, error) {
 	module := r.modules[path]
 	if module != nil {
 		return module, nil
@@ -107,7 +107,7 @@ func (r *RequireModule) loadNative(path string) (*js.Object, error) {
 	return nil, InvalidModuleError
 }
 
-func (r *RequireModule) loadAsFileOrDirectory(path string) (module *js.Object, err error) {
+func (r *RequireModule) loadAsFileOrDirectory(path string) (module *sobek.Object, err error) {
 	if module, err = r.loadAsFile(path); module != nil || err != nil {
 		return
 	}
@@ -115,7 +115,7 @@ func (r *RequireModule) loadAsFileOrDirectory(path string) (module *js.Object, e
 	return r.loadAsDirectory(path)
 }
 
-func (r *RequireModule) loadAsFile(path string) (module *js.Object, err error) {
+func (r *RequireModule) loadAsFile(path string) (module *sobek.Object, err error) {
 	if module, err = r.loadModule(path); module != nil || err != nil {
 		return
 	}
@@ -129,7 +129,7 @@ func (r *RequireModule) loadAsFile(path string) (module *js.Object, err error) {
 	return r.loadModule(p)
 }
 
-func (r *RequireModule) loadIndex(modpath string) (module *js.Object, err error) {
+func (r *RequireModule) loadIndex(modpath string) (module *sobek.Object, err error) {
 	p := path.Join(modpath, "index.js")
 	if module, err = r.loadModule(p); module != nil || err != nil {
 		return
@@ -139,7 +139,7 @@ func (r *RequireModule) loadIndex(modpath string) (module *js.Object, err error)
 	return r.loadModule(p)
 }
 
-func (r *RequireModule) loadAsDirectory(modpath string) (module *js.Object, err error) {
+func (r *RequireModule) loadAsDirectory(modpath string) (module *sobek.Object, err error) {
 	p := path.Join(modpath, "package.json")
 	buf, err := r.r.getSource(p)
 	if err != nil {
@@ -161,11 +161,11 @@ func (r *RequireModule) loadAsDirectory(modpath string) (module *js.Object, err 
 	return r.loadIndex(m)
 }
 
-func (r *RequireModule) loadNodeModule(modpath, start string) (*js.Object, error) {
+func (r *RequireModule) loadNodeModule(modpath, start string) (*sobek.Object, error) {
 	return r.loadAsFileOrDirectory(path.Join(start, modpath))
 }
 
-func (r *RequireModule) loadNodeModules(modpath, start string) (module *js.Object, err error) {
+func (r *RequireModule) loadNodeModules(modpath, start string) (module *sobek.Object, err error) {
 	for _, dir := range r.r.globalFolders {
 		if module, err = r.loadNodeModule(modpath, dir); module != nil || err != nil {
 			return
@@ -195,7 +195,7 @@ func (r *RequireModule) loadNodeModules(modpath, start string) (module *js.Objec
 }
 
 func (r *RequireModule) getCurrentModulePath() string {
-	var buf [2]js.StackFrame
+	var buf [2]sobek.StackFrame
 	frames := r.runtime.CaptureCallStack(2, buf[:0])
 	if len(frames) < 2 {
 		return "."
@@ -203,13 +203,13 @@ func (r *RequireModule) getCurrentModulePath() string {
 	return path.Dir(frames[1].SrcName())
 }
 
-func (r *RequireModule) createModuleObject() *js.Object {
+func (r *RequireModule) createModuleObject() *sobek.Object {
 	module := r.runtime.NewObject()
 	module.Set("exports", r.runtime.NewObject())
 	return module
 }
 
-func (r *RequireModule) loadModule(path string) (*js.Object, error) {
+func (r *RequireModule) loadModule(path string) (*sobek.Object, error) {
 	module := r.modules[path]
 	if module == nil {
 		module = r.createModuleObject()
@@ -227,7 +227,7 @@ func (r *RequireModule) loadModule(path string) (*js.Object, error) {
 	return module, nil
 }
 
-func (r *RequireModule) loadModuleFile(path string, jsModule *js.Object) error {
+func (r *RequireModule) loadModuleFile(path string, jsModule *sobek.Object) error {
 
 	prg, err := r.r.getCompiledSource(path)
 
@@ -240,7 +240,7 @@ func (r *RequireModule) loadModuleFile(path string, jsModule *js.Object) error {
 		return err
 	}
 
-	if call, ok := js.AssertFunction(f); ok {
+	if call, ok := sobek.AssertFunction(f); ok {
 		jsExports := jsModule.Get("exports")
 		jsRequire := r.runtime.Get("require")
 

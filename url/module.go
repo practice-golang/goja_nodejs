@@ -1,21 +1,21 @@
 package url
 
 import (
-	goja "github.com/grafana/sobek"
+	"github.com/grafana/sobek"
 	"github.com/practice-golang/goja_nodejs/require"
 )
 
 const ModuleName = "url"
 
 type urlModule struct {
-	r *goja.Runtime
+	r *sobek.Runtime
 
-	URLSearchParamsPrototype         *goja.Object
-	URLSearchParamsIteratorPrototype *goja.Object
+	URLSearchParamsPrototype         *sobek.Object
+	URLSearchParamsIteratorPrototype *sobek.Object
 }
 
-func Require(runtime *goja.Runtime, module *goja.Object) {
-	exports := module.Get("exports").(*goja.Object)
+func Require(runtime *sobek.Runtime, module *sobek.Object) {
+	exports := module.Get("exports").(*sobek.Object)
 	m := &urlModule{
 		r: runtime,
 	}
@@ -25,7 +25,7 @@ func Require(runtime *goja.Runtime, module *goja.Object) {
 	exports.Set("domainToUnicode", m.domainToUnicode)
 }
 
-func Enable(runtime *goja.Runtime) {
+func Enable(runtime *sobek.Runtime) {
 	m := require.Require(runtime, ModuleName).ToObject(runtime)
 	runtime.Set("URL", m.Get("URL"))
 	runtime.Set("URLSearchParams", m.Get("URLSearchParams"))

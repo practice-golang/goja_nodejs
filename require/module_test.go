@@ -11,7 +11,7 @@ import (
 	"runtime"
 	"testing"
 
-	js "github.com/grafana/sobek"
+	"github.com/grafana/sobek"
 )
 
 func mapFileSystemSourceLoader(files map[string]string) SourceLoader {
@@ -30,14 +30,14 @@ func TestRequireNativeModule(t *testing.T) {
 	m.test();
 	`
 
-	vm := js.New()
+	vm := sobek.New()
 
 	registry := new(Registry)
 	registry.Enable(vm)
 
-	RegisterNativeModule("test/m", func(runtime *js.Runtime, module *js.Object) {
-		o := module.Get("exports").(*js.Object)
-		o.Set("test", func(call js.FunctionCall) js.Value {
+	RegisterNativeModule("test/m", func(runtime *sobek.Runtime, module *sobek.Object) {
+		o := module.Get("exports").(*sobek.Object)
+		o.Set("test", func(call sobek.FunctionCall) sobek.Value {
 			return runtime.ToValue("passed")
 		})
 	})
@@ -53,33 +53,33 @@ func TestRequireNativeModule(t *testing.T) {
 }
 
 func TestRegisterCoreModule(t *testing.T) {
-	vm := js.New()
+	vm := sobek.New()
 
 	registry := new(Registry)
 	registry.Enable(vm)
 
-	RegisterCoreModule("coremod", func(runtime *js.Runtime, module *js.Object) {
-		o := module.Get("exports").(*js.Object)
-		o.Set("test", func(call js.FunctionCall) js.Value {
+	RegisterCoreModule("coremod", func(runtime *sobek.Runtime, module *sobek.Object) {
+		o := module.Get("exports").(*sobek.Object)
+		o.Set("test", func(call sobek.FunctionCall) sobek.Value {
 			return runtime.ToValue("passed")
 		})
 	})
 
-	RegisterCoreModule("coremod1", func(runtime *js.Runtime, module *js.Object) {
-		o := module.Get("exports").(*js.Object)
-		o.Set("test", func(call js.FunctionCall) js.Value {
+	RegisterCoreModule("coremod1", func(runtime *sobek.Runtime, module *sobek.Object) {
+		o := module.Get("exports").(*sobek.Object)
+		o.Set("test", func(call sobek.FunctionCall) sobek.Value {
 			return runtime.ToValue("passed1")
 		})
 	})
 
-	RegisterCoreModule("node:test1", func(runtime *js.Runtime, module *js.Object) {
-		o := module.Get("exports").(*js.Object)
-		o.Set("test", func(call js.FunctionCall) js.Value {
+	RegisterCoreModule("node:test1", func(runtime *sobek.Runtime, module *sobek.Object) {
+		o := module.Get("exports").(*sobek.Object)
+		o.Set("test", func(call sobek.FunctionCall) sobek.Value {
 			return runtime.ToValue("test1 passed")
 		})
 	})
 
-	registry.RegisterNativeModule("bob", func(runtime *js.Runtime, module *js.Object) {
+	registry.RegisterNativeModule("bob", func(runtime *sobek.Runtime, module *sobek.Object) {
 
 	})
 
@@ -137,16 +137,16 @@ func TestRequireRegistryNativeModule(t *testing.T) {
 	`
 
 	logWithOutput := func(w io.Writer, prefix string) ModuleLoader {
-		return func(vm *js.Runtime, module *js.Object) {
-			o := module.Get("exports").(*js.Object)
-			o.Set("print", func(call js.FunctionCall) js.Value {
+		return func(vm *sobek.Runtime, module *sobek.Object) {
+			o := module.Get("exports").(*sobek.Object)
+			o.Set("print", func(call sobek.FunctionCall) sobek.Value {
 				fmt.Fprint(w, prefix, call.Argument(0).String())
-				return js.Undefined()
+				return sobek.Undefined()
 			})
 		}
 	}
 
-	vm1 := js.New()
+	vm1 := sobek.New()
 	buf1 := &bytes.Buffer{}
 
 	registry1 := new(Registry)
@@ -154,7 +154,7 @@ func TestRequireRegistryNativeModule(t *testing.T) {
 
 	registry1.RegisterNativeModule("test/log", logWithOutput(buf1, "vm1 "))
 
-	vm2 := js.New()
+	vm2 := sobek.New()
 	buf2 := &bytes.Buffer{}
 
 	registry2 := new(Registry)
@@ -224,7 +224,7 @@ func TestRequire(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.path, func(t *testing.T) {
-			vm := js.New()
+			vm := sobek.New()
 			vm.Set("testPath", test.path)
 
 			registry := new(Registry)
@@ -263,7 +263,7 @@ func TestSourceLoader(t *testing.T) {
 	exports.test = test;
 	`
 
-	vm := js.New()
+	vm := sobek.New()
 
 	registry := NewRegistry(WithGlobalFolders("."), WithLoader(func(name string) ([]byte, error) {
 		if name == "m.js" {
@@ -301,7 +301,7 @@ func TestStrictModule(t *testing.T) {
 	exports.test = test;
 	`
 
-	vm := js.New()
+	vm := sobek.New()
 
 	registry := NewRegistry(WithGlobalFolders("."), WithLoader(func(name string) ([]byte, error) {
 		if name == "m.js" {
@@ -322,8 +322,8 @@ func TestStrictModule(t *testing.T) {
 }
 
 func TestResolve(t *testing.T) {
-	testRequire := func(src, fpath string, globalFolders []string, fs map[string]string) (*js.Runtime, js.Value, error) {
-		vm := js.New()
+	testRequire := func(src, fpath string, globalFolders []string, fs map[string]string) (*sobek.Runtime, sobek.Value, error) {
+		vm := sobek.New()
 		r := NewRegistry(WithGlobalFolders(globalFolders...), WithLoader(mapFileSystemSourceLoader(fs)))
 		r.Enable(vm)
 		t.Logf("Require(%s)", fpath)
@@ -422,7 +422,7 @@ func TestResolve(t *testing.T) {
 }
 
 func TestRequireCycle(t *testing.T) {
-	vm := js.New()
+	vm := sobek.New()
 	r := NewRegistry(WithLoader(mapFileSystemSourceLoader(map[string]string{
 		"a.js": `var b = require('./b.js'); exports.done = true;`,
 		"b.js": `var a = require('./a.js'); exports.done = true;`,
@@ -442,7 +442,7 @@ func TestRequireCycle(t *testing.T) {
 }
 
 func TestErrorPropagation(t *testing.T) {
-	vm := js.New()
+	vm := sobek.New()
 	r := NewRegistry(WithLoader(mapFileSystemSourceLoader(map[string]string{
 		"m.js": `throw 'test passed';`,
 	})))
@@ -451,7 +451,7 @@ func TestErrorPropagation(t *testing.T) {
 	if err == nil {
 		t.Fatal("Expected an error")
 	}
-	if ex, ok := err.(*js.Exception); ok {
+	if ex, ok := err.(*sobek.Exception); ok {
 		if !ex.Value().StrictEquals(vm.ToValue("test passed")) {
 			t.Fatalf("Unexpected Exception: %v", ex)
 		}
@@ -461,7 +461,7 @@ func TestErrorPropagation(t *testing.T) {
 }
 
 func TestSourceMapLoader(t *testing.T) {
-	vm := js.New()
+	vm := sobek.New()
 	r := NewRegistry(WithLoader(func(p string) ([]byte, error) {
 		switch p {
 		case "dir/m.js":
@@ -479,7 +479,7 @@ func TestSourceMapLoader(t *testing.T) {
 	if err == nil {
 		t.Fatal("Expected an error")
 	}
-	if ex, ok := err.(*js.Exception); ok {
+	if ex, ok := err.(*sobek.Exception); ok {
 		if !ex.Value().StrictEquals(vm.ToValue("test passed")) {
 			t.Fatalf("Unexpected Exception: %v", ex)
 		}
@@ -517,14 +517,14 @@ func TestDefaultModuleLoader(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	vm := js.New()
+	vm := sobek.New()
 	r := NewRegistry()
 	rr := r.Enable(vm)
 	_, err = rr.Require("./module")
 	if err == nil {
 		t.Fatal("Expected an error")
 	}
-	if ex, ok := err.(*js.Exception); ok {
+	if ex, ok := err.(*sobek.Exception); ok {
 		if !ex.Value().StrictEquals(vm.ToValue("test passed")) {
 			t.Fatalf("Unexpected Exception: %v", ex)
 		}
